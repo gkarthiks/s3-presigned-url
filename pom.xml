@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.gkarthiks.s3</groupId>
@@ -7,9 +7,30 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>s3-presigned-url</name>
-  <url>http://maven.apache.org</url>
+  <name>s3-presignedURL</name>
+  <description>A jar file to get the Pre Signed URL for the Amazon S3 virtually hosted buckets.</description>
+  <url>https://github.com/gkarthiks/s3-presigned-url/tree/master</url>
 
+  <licenses>
+    <license>
+	  <name>MIT license</name>
+		<url>http://www.opensource.org/licenses/mit-license.php</url>
+	</license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <name>Karthikeyan Govindaraj</name>
+      <email>gsk.karthi@gmail.com</email>
+    </developer>
+  </developers>
+  
+  <scm>
+	<connection>scm:git:git://github.com/gkarthiks/s3-presigned-url.git</connection>
+	<developerConnection>scm:git:ssh://github.com:gkarthiks/s3-presigned-url.git</developerConnection>
+	<url>https://github.com/gkarthiks/s3-presigned-url/tree/master</url>
+  </scm>
+  
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.level>1.8</java.level>
@@ -46,21 +67,17 @@
 	</dependency>
   </dependencies>
   <build>
-	<finalName>s3.presignedURL</finalName>
-  	<plugins>
-  	  <plugin>
-  		<groupId>org.apache.maven.plugins</groupId>
-  		<artifactId>maven-javadoc-plugin</artifactId>
-  		  <executions>
-    		<execution>
-      		  <id>attach-javadocs</id>
-      		  <goals>
-        		<goal>jar</goal>
-      		  </goals>
-    		</execution>
-  		</executions>
-	  </plugin>
-	  <plugin>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <target>1.8</target>
+          <source>1.8</source>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
@@ -74,9 +91,48 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
-          <finalName>s3.presignedURL</finalName>
           <appendAssemblyId>false</appendAssemblyId>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9.1</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
