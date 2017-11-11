@@ -62,7 +62,7 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 ```'com.github.gkarthiks:s3-presigned-url:jar:0.1.0'```
 
 ### Apache Ivy
-```xml <dependency org="com.github.gkarthiks" name="s3-presigned-url" rev="0.1.0" />```
+``` <dependency org="com.github.gkarthiks" name="s3-presigned-url" rev="0.1.0" />```
 
 ### Groovy Grape
 ```
