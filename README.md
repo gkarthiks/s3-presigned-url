@@ -50,20 +50,20 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 ### Maven/Gradle
 
-xml
+```xml
 <dependency>
   <groupId>com.github.gkarthiks</groupId>
   <artifactId>s3-presigned-url</artifactId>
   <version>0.1.0</version>
- </dependency>
- 
+</dependency>
+```
 ## Implementation
 * Create a Map for the credentials.
 * Construct the End Point URL based on this [Amazon Reference table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
 * Pass "GET" as httpMethod.
 * Pass the bucket region where it is hosted.
 * Provide the desired expiry time in seconds for TTL.
-* As of now pass null for marker.
+* Provide the Proxy port and host to retrieve the listof file / folders hosted.
 
 Java
 
