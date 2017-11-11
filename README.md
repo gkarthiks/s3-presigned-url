@@ -57,6 +57,29 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
   <version>0.1.0</version>
 </dependency>
 ```
+
+### Apache Buildr
+```'com.github.gkarthiks:s3-presigned-url:jar:0.1.0'```
+
+### Apache Ivy
+```xml <dependency org="com.github.gkarthiks" name="s3-presigned-url" rev="0.1.0" />```
+
+### Groovy Grape
+```
+@Grapes( 
+@Grab(group='com.github.gkarthiks', module='s3-presigned-url', version='0.1.0') 
+)
+```
+
+### Gradle/Grails
+```compile 'com.github.gkarthiks:s3-presigned-url:0.1.0'```
+
+### Scala SBT
+```libraryDependencies += "com.github.gkarthiks" % "s3-presigned-url" % "0.1.0"```
+
+### Leiningen
+```[com.github.gkarthiks/s3-presigned-url "0.1.0"]```
+
 ## Implementation
 * Create a Map for the credentials.
 * Construct the End Point URL based on this [Amazon Reference table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
