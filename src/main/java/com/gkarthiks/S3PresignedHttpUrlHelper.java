@@ -1,11 +1,18 @@
 package com.gkarthiks;
 
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,10 +28,40 @@ import java.util.TreeMap;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import com.gkarthiks.s3.utils.S3Constants;
+import com.gkarthiks.s3.utils.S3File;
 
 /**
  * 
@@ -32,8 +69,7 @@ import com.gkarthiks.s3.utils.S3Constants;
  * This Helper class is used to prepare the pre-signed URL for the S3 services
  * which can be used for HTTP Downloads. 
  */
-public class S3PresignedHttpUrlHelper
-{
+public class S3PresignedHttpUrlHelper {
 	
 	protected final static SimpleDateFormat dateTimeFormat;
 	protected final static SimpleDateFormat dateStampFormat;
@@ -63,38 +99,29 @@ public class S3PresignedHttpUrlHelper
 	 */
 	public String getPreSignedHttpUrl(String endPointURL, Map<String, String> s3Credentials, String httpMethod, String bucketRegion, int ttl, String marker) throws Exception 
 	{
-	
 		if(endPointURL.endsWith("/"))
 			endPointURL = endPointURL.substring(0, endPointURL.length()-1);
 		
 		String awsAccessKey, awsSecretKey, authorizationQueryParameters = null, presignedUrl = null ;
-		if(s3Credentials!= null && !s3Credentials.isEmpty())
-		{
+		if(s3Credentials!= null && !s3Credentials.isEmpty()) {
 			URL endpointUrl;
 			
-			if(s3Credentials.containsKey(S3Constants.AWS_ACCESS_ID) && null != s3Credentials.get(S3Constants.AWS_ACCESS_ID)
-					&& s3Credentials.containsKey(S3Constants.AWS_SECRET_KEY) && null != s3Credentials.get(S3Constants.AWS_SECRET_KEY))
-			{
-				awsAccessKey = s3Credentials.get(S3Constants.AWS_ACCESS_ID);
-				awsSecretKey = s3Credentials.get(S3Constants.AWS_SECRET_KEY);
-			}
-			else
-			{
+			if(s3Credentials.containsKey(S3PresignedURL.AWS_ACCESS_ID) && null != s3Credentials.get(S3PresignedURL.AWS_ACCESS_ID)
+					&& s3Credentials.containsKey(S3PresignedURL.AWS_SECRET_KEY) && null != s3Credentials.get(S3PresignedURL.AWS_SECRET_KEY)) {
+				awsAccessKey = s3Credentials.get(S3PresignedURL.AWS_ACCESS_ID);
+				awsSecretKey = s3Credentials.get(S3PresignedURL.AWS_SECRET_KEY);
+			} else {
 				logger.error("AWS Access ID or Secret Key not found!");
 				throw new Exception("Cannot find AWS Access ID or Secret Key!");
 			}
 			
 	        //Forming the End-point URL 
-	        try 
-	        {
+	        try {
 	        	endpointUrl= new URL(endPointURL);
-	        }
-	        catch (MalformedURLException e) 
-	        {
+	        } catch (MalformedURLException e) {
 	        	logger.error("Unable to parse service endpoint: "+endPointURL+". Exception : " + e.getMessage());
 	            throw new Exception("Unable to parse service endpoint: " + e.getMessage());
 	        }
-	        
 	        
 	        Map<String, String> queryParams = new HashMap<String, String>();
 	        int expiresIn = (ttl == 0) ? (60 * 60) : ttl;
@@ -106,102 +133,104 @@ public class S3PresignedHttpUrlHelper
 	        
 	        presignedUrl = endpointUrl.toString() + "?" + authorizationQueryParameters;
 		}
-		
 		 return presignedUrl;
 	}
 
 	/**
-	 * Access the bucket and fetches the list of files in that bucket
-	 * @param preSignedBucketURL
-	 * @param client 
-	 * @param config 
+	 * Returns the List of files hosted in the given S3 bucket.
+	 * @param endPointURL
+	 * @param s3Credentials
+	 * @param httpMethod
+	 * @param bucketRegion
+	 * @param ttl
+	 * @param proxyPort
+	 * @param proxyHost
 	 * @return
+	 * @throws Exception
 	 */
-	/*private List<String> getFileList(String preSignedBucketURL, CloseableHttpClient client, RequestConfig config) 
+	@SuppressWarnings("unchecked")
+	public List<S3File> getListFiles(String endPointURL, Map<String, String> s3Credentials, String httpMethod, String bucketRegion, int ttl, int proxyPort, String proxyHost) throws Exception 
 	{
-		logger.info("Trying to get the list of files from the S3 bucket via URL -"+preSignedBucketURL);
-		
-		CloseableHttpResponse response = null;
-		List<String> lstPostedFiles = null;
-		HttpEntity entity;
-		try 
-		{
-			HttpGet request = new HttpGet(preSignedBucketURL);
-			
-			//Adding the proxy host
-			if (config != null)
-				request.setConfig(config);
-			
-			response = client.execute(request);
-			entity = response.getEntity();
-			
-			if ((response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) || (entity == null))
+			RequestConfig config =  null;
+			CloseableHttpClient client;
+			CloseableHttpResponse response = null;
+	      	int retryCount = 5;
+	      	boolean requestSentRetryEnabled = true, followRedirects = true;
+	      	//String proxyHost = "webproxy";
+	      	String marker = null;
+	      	HttpGet request = null;
+	      	List<S3File> lstPostedFiles	= new ArrayList<>();
+	      	String presignedURL = "";
+			try 
 			{
-				System.out.println("Failed to get the HTTP response" + response.getStatusLine());
-			}
-			else
-			{
-				// handle the response
-				try 
+				client = prepareClient(retryCount, requestSentRetryEnabled );
+				config = prepareConfig(proxyHost, proxyPort, followRedirects);
+				boolean done = false;
+				while(!done)
 				{
-					//downloadedFile = handleResponseStream(entity.getContent());
-					String strXML = S3CommonUtils.getStringFromInputStream(entity.getContent());
-					lstPostedFiles = getFileListFromXMLStr(strXML);
-				}
-				catch (Exception e) 
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-		catch (IOException e) 
-		{
-			logger.error("Exception occured when trying to execute a HTTP GET on Amazon S3 :"+e.getMessage());
-		}
-		
-		return lstPostedFiles;
-	}*/
+					presignedURL = this.getPreSignedHttpUrl(endPointURL, s3Credentials, httpMethod, bucketRegion, ttl, marker);
+					
+					//Get the list of File names
+					request = new HttpGet(presignedURL);
 
-	/**
-	 * Creates the list of File names from the XML String
-	 * @param strXML
-	 * @return
-	 */
-	/*private List<String> getFileListFromXMLStr(String strXML) 
-	{
-		//Instantiating the Document factory for the XML Builder
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
-	    DocumentBuilder builder;  
-	    List<String> lstPostedFiles = new ArrayList<>();
-	    try  
-	    {  
-	        builder = factory.newDocumentBuilder();  
-	        Document docXML = builder.parse(new InputSource(new StringReader(strXML)));  
-	        //Normalizing, not required but recommended
-	        docXML.getDocumentElement().normalize();
-	        //To check, if the XML has been parsed without errors
-	        System.out.println("Root element :" + docXML.getDocumentElement().getNodeName());
-	        //Taking the List of COntsnts tag which holds the Key (a.k.a File name) 
-	        NodeList nList = docXML.getElementsByTagName("Contents");
-	        
-	        for (int temp = 0; temp < nList.getLength(); temp++) 
-	        {
-	        	Node nNode = nList.item(temp);
-		        if (nNode.getNodeType() == Node.ELEMENT_NODE) 
-		        {
-					Element eElement = (Element) nNode;
-					lstPostedFiles.add(eElement.getElementsByTagName("Key").item(0).getFirstChild().getNodeValue());
-				}		        
-	        }
-	    }
-	    catch(Exception e)
-	    {
-	    	logger.error("Exception occured while creating the XML document form the XML String. "+e.getMessage());
-	    }
-		return lstPostedFiles;
-	}*/
-	
+					if (config != null)
+						request.setConfig(config);
+					
+					//Executing the HTTP Request
+					response = client.execute(request);
+					
+					//Determining the response status
+					HttpEntity entity = response.getEntity();
+					
+					logger.info("*--> executed --> HttpEntity entity = response.getEntity(); **");
+					
+					if ((response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) || (entity == null)) {
+						logger.info("**--> Failed to get the HTTP response" + response.getStatusLine());
+						System.out.println("Failed to get the HTTP response" + response.getStatusLine());
+					} else {
+						//Populating the list of files
+						Map<String, Object> filesAndMarkerMap = readS3ListFrmXMLStream(entity.getContent());
+						
+						//Getting the File list and marker key
+						if(null != filesAndMarkerMap 
+								&& !(filesAndMarkerMap.get(S3Constants.FILES_LIST) instanceof String)
+								&& !((String)filesAndMarkerMap.get(S3Constants.MARKER_KEY)).equalsIgnoreCase(S3Constants.EOFile))
+						{
+							lstPostedFiles.addAll((List<S3File>) filesAndMarkerMap.get(S3Constants.FILES_LIST));
+							marker = (String) filesAndMarkerMap.get(S3Constants.MARKER_KEY);
+						}
+						else
+							done = true;
+						
+						logger.info("********--> size of  lstPostedFiles in the else block of getListFiles() = "+lstPostedFiles.size());
+					}
+				}
+			}
+			catch(ClientProtocolException cpe) {
+				throw new Exception("ClientProtocol Exception occured while trying to execute teh HTTP request ion the URL <"+presignedURL+">"+cpe.getMessage());
+			} catch (KeyManagementException e) {
+				throw new Exception("KeyManagement Exception occured while creating the SSL Connection socket "+e.getMessage());
+			} catch (NoSuchAlgorithmException e) {
+				throw new Exception("Failed to load  Trust material, NoSuchAlgorithmException "+e.getMessage());
+			} catch (KeyStoreException e) {
+				throw new Exception("Failed to load  Trust material, KeyStoreException "+e.getMessage());
+			} catch(IOException ioe) {
+				throw new Exception("IOException, Failed to get the byte stream from the HTTP Entity got from the HTTP Response "+ioe.getMessage());
+			} catch(Exception e) {
+				throw new Exception("Exception occured in S3DownloadTask.getListFiles() "+e.getMessage());
+			} finally {
+				logger.info("********--> Inside the finally block of getListFiles method ");
+				try {
+					if(null != response) {
+						logger.info("********--> closing the response object in the finally block");
+						response.close();
+					}
+				} catch (IOException e) {
+					throw new Exception("Exception occured while closing the response object in S3DownloadTask.getListFiles() "+e.getMessage());
+				}
+			}
+			return lstPostedFiles;
+	}
 	
 	/**
 	 * Takes the input stream, which is an XML data and converts it into Lis of S3Files 
@@ -210,7 +239,7 @@ public class S3PresignedHttpUrlHelper
 	 * @return 
 	 * @throws Exception 
 	 */
-	/*private Map<String, Object> readS3ListFrmXMLStream(InputStream content) throws Exception 
+	private Map<String, Object> readS3ListFrmXMLStream(InputStream content) throws Exception 
 	{
 		Map<String, Object> filesAndMarkerMap = new HashMap<>();
 		String marker = null;
@@ -237,7 +266,7 @@ public class S3PresignedHttpUrlHelper
 	        logger.debug("List of files data added are as follows");
 	        for (int temp = 0; temp < nList.getLength(); temp++) 
 	        {
-	        	S3File s3fileMetaData = new S3File();
+	        	com.gkarthiks.s3.utils.S3File s3fileMetaData = new S3File();
 	        	Node nNode = nList.item(temp);
 		        if (nNode.getNodeType() == Node.ELEMENT_NODE) 
 		        {
@@ -255,22 +284,17 @@ public class S3PresignedHttpUrlHelper
 		        lstPostedFiles.add(s3fileMetaData);
 	        }
 	        logger.info("Total number of files details added / got from S3 with node size  "+nList.getLength()+" is = "+lstPostedFiles.size());
-		}
-		catch(ParserConfigurationException e)
-		{
+		} catch(ParserConfigurationException e) {
 			throw new Exception("Exception occured while parsing the String XML into a XML document: "+e.getMessage());
-		}
-		catch(SAXException e)
-		{
+		} catch(SAXException e) {
 			throw new Exception("SAXException occured to a XML document: "+e.getMessage());
-		}
-		catch(Exception e)
-		{
+		} catch(Exception e) {
 			throw new Exception("Exception occured while generating the list of S3Files from the bucket: "+e.getMessage());
 		}
 		
-		//Populating the map with the list of files and marker of the current list.
-		 
+		/**
+		 * Populating the map with the list of files and marker of the current list.
+		 */
 		if(lstPostedFiles != null && lstPostedFiles.size() > 0)
 		{
 			filesAndMarkerMap.put(S3Constants.FILES_LIST, lstPostedFiles);
@@ -281,71 +305,9 @@ public class S3PresignedHttpUrlHelper
 			filesAndMarkerMap.put(S3Constants.FILES_LIST, "EOL");
 			filesAndMarkerMap.put(S3Constants.MARKER_KEY, "EOF");
 		}
-		
 		return filesAndMarkerMap;
-	}*/
-	
-	/**
-	 * To get the String from Input Stream 
-	 * @param is
-	 * @return
-	 */
-	/*private String getStringFromInputStream(InputStream is) 
-	{
-		BufferedReader br = null;
-		StringBuilder sb = new StringBuilder();
-		String line;
-		try 
-		{
-			br = new BufferedReader(new InputStreamReader(is));
-			while ((line = br.readLine()) != null) 
-			{
-				sb.append(line);
-			}
-		} 
-		catch (IOException e) 
-		{
-			e.printStackTrace();
-		}
-		finally 
-		{
-			if (br != null) 
-			{
-				try 
-				{
-					br.close();
-				}
-				catch (IOException e) 
-				{
-					e.printStackTrace();
-				}
-			}
-		}
-		return sb.toString();
-	}*/
-
-	/**
-	 * Iterates through the list of files and gives the matched files to download 
-	 * @param lstPostedFiles
-	 * @param ddSourcePattern
-	 * @return
-	 *//*
-	public List<S3File> getListOfMatchedFilesToDownload(List<S3File> lstPostedFiles, String ddSourcePattern) 
-	{
-		List<S3File> lstToDwnld = new ArrayList<>();
-		if(null != lstPostedFiles && lstPostedFiles.size() > 0 )
-		{
-			Pattern p = Pattern.compile(ddSourcePattern);
-			lstPostedFiles.forEach(s3File -> {
-				Matcher m = p.matcher(s3File.getFileName());
-				if (m.matches()) {
-					lstToDwnld.add(s3File);
-				}
-			});
-		}
-		return lstToDwnld;
 	}
-*/
+	
 	/**
 	 * Computational of the signature is initialized
 	 * @param endpointUrl 
@@ -392,8 +354,7 @@ public class S3PresignedHttpUrlHelper
         /**
          * Additional parameters for iterating the list of available files.
          */
-        if(null != marker)
-        {
+        if(null != marker) {
         	queryParameters.put("max-keys", S3Constants.MAX_KEYS);
         	queryParameters.put("marker",marker);
         }
@@ -435,8 +396,7 @@ public class S3PresignedHttpUrlHelper
         /**
          * Additional parameters for iterating the list of available files.
          */
-        if(null != marker)
-        {
+        if(null != marker) {
         	authString.append("&max-keys=" + S3Constants.MAX_KEYS);
         	authString.append("&marker=" +marker);
         }
@@ -445,24 +405,19 @@ public class S3PresignedHttpUrlHelper
     }
 	
 	/**
-     * 
      * @param stringData
      * @param key
      * @param algorithm
      * @return
      * @throws DapException 
      */
-    private static byte[] sign(String stringData, byte[] key, String algorithm) throws Exception 
-    {
-        try 
-        {
+    private static byte[] sign(String stringData, byte[] key, String algorithm) throws Exception {
+        try {
             byte[] data = stringData.getBytes("UTF-8");
             Mac mac = Mac.getInstance(algorithm);
             mac.init(new SecretKeySpec(key, algorithm));
             return mac.doFinal(data);
-        }
-        catch (Exception e) 
-        {
+        } catch (Exception e) {
             throw new Exception("Unable to calculate a request signature: " + e.getMessage());
         }
     }
@@ -472,19 +427,14 @@ public class S3PresignedHttpUrlHelper
      * @param data data to hex encode.
      * @return hex-encoded string.
      */
-    private static String toHex(byte[] data) 
-    {
+    private static String toHex(byte[] data) {
         StringBuilder sb = new StringBuilder(data.length * 2);
-        for (int i = 0; i < data.length; i++) 
-        {
+        for (int i = 0; i < data.length; i++) {
             String hex = Integer.toHexString(data[i]);
-            if (hex.length() == 1) 
-            {
+            if (hex.length() == 1) {
                 // Append leading zero.
                 sb.append("0");
-            }
-            else if (hex.length() == 8) 
-            {
+            } else if (hex.length() == 8) {
                 // Remove ff prefix from negative numbers.
                 hex = hex.substring(6);
             }
@@ -629,20 +579,15 @@ public class S3PresignedHttpUrlHelper
     * @return
     * @throws DapException 
     */
-   private static String urlEncode(String url, boolean keepPathSlash) throws Exception 
-   {
+   private static String urlEncode(String url, boolean keepPathSlash) throws Exception {
        String encoded;
-       try 
-       {
+       try {
            encoded = URLEncoder.encode(url, "UTF-8");
-       }
-       catch (UnsupportedEncodingException e) 
-       {
+       } catch (UnsupportedEncodingException e) {
            throw new Exception("UTF-8 encoding is not supported."+ e.getMessage());
        }
        
-       if ( keepPathSlash ) 
-       {
+       if ( keepPathSlash ) {
            encoded = encoded.replace("%2F", "/");
        }
        return encoded;
@@ -654,8 +599,7 @@ public class S3PresignedHttpUrlHelper
     * @throws DapException 
     */
    private static String getCanonicalRequest(URL endpoint, String httpMethod, String queryParameters, String canonicalizedHeaderNames,
-                                        String canonicalizedHeaders, String bodyHash) throws Exception 
-   {
+                                        String canonicalizedHeaders, String bodyHash) throws Exception {
        String canonicalRequest = httpMethod + "\n" +
                        getCanonicalizedResourcePath(endpoint) + "\n" +
                        queryParameters + "\n" +
@@ -669,27 +613,105 @@ public class S3PresignedHttpUrlHelper
     * Returns the canonicalized resource path for the service end-point.
     * @throws DapException 
     */
-   private static String getCanonicalizedResourcePath(URL endpoint) throws Exception 
-   {
-       if ( endpoint == null ) 
-       {
+   private static String getCanonicalizedResourcePath(URL endpoint) throws Exception {
+       if ( endpoint == null ) {
            return "/";
        }
        
        String path = endpoint.getPath();
-       if ( path == null || path.isEmpty() ) 
-       {
+       if ( path == null || path.isEmpty() ) {
            return "/";
        }
        
        String encodedPath = urlEncode(path, true);
-       if (encodedPath.startsWith("/")) 
-       {
+       if (encodedPath.startsWith("/")) {
            return encodedPath;
-       }
-       else 
-       {
+       } else {
            return "/".concat(encodedPath);
        }
    }
+   
+   /**
+	 * To get the String from Input Stream 
+	 * @param is
+	 * @return
+	 */
+	private static String getStringFromInputStream(InputStream is) {
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
+		String line;
+		try {
+			br = new BufferedReader(new InputStreamReader(is));
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
+	/**
+	 * Creates the ClosableHttpClient for the execution of the GET Request
+	 * @param retryCount2
+	 * @param requestSentRetryEnabled2
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 * @throws KeyStoreException
+	 * @throws KeyManagementException
+	 */
+	private CloseableHttpClient prepareClient(int retryCount, boolean requestSentRetryEnabled) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+		SSLConnectionSocketFactory sslsf;
+		CredentialsProvider credsProvider;
+		SSLContextBuilder builder;
+		
+		builder = new SSLContextBuilder();
+		credsProvider = new BasicCredentialsProvider();
+		builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+		sslsf = new SSLConnectionSocketFactory(builder.build());
+		
+		Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", new PlainConnectionSocketFactory())
+                .register("https", sslsf)
+                .build();
+		
+		PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
+		cm.setMaxTotal(2000);//max connection
+		
+		CloseableHttpClient client =  HttpClients.custom()
+				.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount, requestSentRetryEnabled))
+				.setSSLSocketFactory(sslsf)
+				.setConnectionManager(cm)
+				.setDefaultCredentialsProvider(credsProvider)
+				.build();
+		
+		return client;
+	}
+	
+	/**
+	 * To prepare the config for the HTTP request
+	 * @param proxyHost
+	 * @param proxyPort
+	 * @param followRedirects2
+	 * @return
+	 */
+	private RequestConfig prepareConfig(String proxyHost, int proxyPort, boolean followRedirects) {
+		RequestConfig config =  null;
+		if(null !=proxyHost) {
+            HttpHost proxy = new HttpHost(proxyHost, proxyPort, "http");
+            config = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .setRedirectsEnabled(followRedirects)
+                    .build();			
+		}
+		return config;
+	}
 }
