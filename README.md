@@ -20,7 +20,7 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
   * HTTP Method
   * Bucket Region
   * TTL
-  * Marker (under constn.)
+  * Proxy Host and Port
 * *Endpoint URL* is the URL of your bucket along with the path of file / folder.
   * Eg:- http://s3-us-west-1.amazonaws.com/<BUCKET_NAME>/<FOLDER>/<FILENAME.FORMAT>
   * Every region has its own format of ENd Point URL. The End point URL should be constructed perfectly to access the data.
@@ -33,8 +33,8 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
   * For region specific URLs, please refer to the Amazon site [Amazon Region Specific End Point URLs and Protocols](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
       
 * *Credential Map :* s3-presigned-url takes the credentials in HashMap<String, String>. 
-  * Map S3Constants.AWS_ACCESS_ID as the key and the Access ID as the value string.
-  * Map S3Constants.AWS_SECRET_KEY as the key and secret key / password as the value string.
+  * Map S3PresignedURL.AWS_ACCESS_ID as the key and the Access ID as the value string.
+  * Map S3PresignedURL.AWS_SECRET_KEY as the key and secret key / password as the value string.
   * Passing the encrypted password is coming soon.
   
 * *HTTP Method* is used to specify the method of interaction over the HTTP protocol. Please pass "GET" tothis parameter.
@@ -43,7 +43,7 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 * *TTL* is the *Time **To **L*ive for the generated Pre-Signed URL. It should be provided in seconds. If provided as 0, it is set to expire in 1Hr.
 
-* *Marker* is used to get the list of files if it is more than 1000 in the response XML. It is a future under construction. As of now it can take *null* and do no harm.
+* *Proxy Host and Port* is needed to download the list of files and folders in the virtually hosted S3 bucket.
 
 ## Usage
 *s3-presigned-url* is available as a dependency jar in Maven central repository. 
@@ -54,7 +54,7 @@ xml
 <dependency>
   <groupId>com.github.gkarthiks</groupId>
   <artifactId>s3-presigned-url</artifactId>
-  <version>0.0.1</version>
+  <version>0.1.0</version>
  </dependency>
  
 ## Implementation
@@ -66,8 +66,20 @@ xml
 * As of now pass null for marker.
 
 Java
-Map<String, String> s3Creds = new HashMap<>();
-s3Creds.put(S3Constants.AWS_ACCESS_ID, <ACCESS_ID>);
-s3Creds.put(S3Constants.AWS_SECRET_KEY, <SECRET_KEY>);
 
-String preSignedURL = S3PresignedURL.getS3PresignedURL(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600, null);
+To get the Pre-Signed URL,
+```
+Map<String, String> s3Creds = new HashMap<>();
+s3Creds.put(S3PresignedURL.AWS_ACCESS_ID, <ACCESS_ID>);
+s3Creds.put(S3PresignedURL.AWS_SECRET_KEY, <SECRET_KEY>);
+
+String preSignedURL = S3PresignedURL.getS3PresignedURL(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600);
+```
+To get the list of files,
+```
+Map<String, String> s3Creds = new HashMap<>();
+s3Creds.put(S3PresignedURL.AWS_ACCESS_ID, <ACCESS_ID>);
+s3Creds.put(S3PresignedURL.AWS_SECRET_KEY, <SECRET_KEY>);
+
+List<S3File> lstS3Files = helper.getListFiles(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600, <PROXY_PORT>, <PROXY_HOST>);
+```
