@@ -12,10 +12,6 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 * Not only to download the file, but also to get the xml file which has the details about the list of files hosted in the bucket. All that need to be done is provide the path of the folder.
 
-
-<details>
- <summary>Using method arguments</summary><p>
- 
   * Following parameters are required.
   * Endpoint URL
   * Credential Map
@@ -48,7 +44,6 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 * *Proxy Host and Port* is needed to download the list of files and folders in the virtually hosted S3 bucket.
 
-</p></details>
 
 ## Usage
 *s3-presigned-url* is available as a dependency jar in Maven central repository. 
@@ -86,6 +81,12 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 ```[com.github.gkarthiks/s3-presigned-url "0.1.0"]```
 
 ## Implementation
+
+<details>
+ <summary>
+  
+  ##### Using method arguments</summary><p>
+ 
 * Create a Map for the credentials.
 * Construct the End Point URL based on this [Amazon Reference table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
 * Pass "GET" as httpMethod.
@@ -94,7 +95,6 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 * Provide the Proxy port and host to retrieve the listof file / folders hosted.
 
 Java
-
 To get the Pre-Signed URL,
 ```
 Map<String, String> s3Creds = new HashMap<>();
@@ -111,3 +111,37 @@ s3Creds.put(S3PresignedURL.AWS_SECRET_KEY, <SECRET_KEY>);
 
  List<S3File> lstS3Files = helper.getListFiles(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600, <PROXY_PORT>, <PROXY_HOST>);
 ```
+ 
+</p></details>
+
+<details>
+ <summary>
+  
+  ##### Using Properties File</summary><p>
+ 
+ * Create a <DESIRED_NAME>.properties file in the `resource` folder.
+ * Have the following key with case sensitivity and corresponding values assigned to it.
+ ```
+ s3.endpoint.url= <END_POINT_URL>
+ s3.http.method= GET
+ s3.bucket.region= <BUCKET_REGION>
+ s3.ttl= <TIME_TO_LIVE_IN_SECONDS>
+ s3.access.id= <ACCESS_ID>
+ s3.secret.key= <SECRET_KEY>
+ s3.proxy.host= <PROXY_HOST>
+ s3.proxy.port= <PROXY_PORT>
+ ```
+
+
+Java
+To get the Pre-Signed URL,
+```
+String preSignedURL = S3PresignedURL.getS3PresignedURL("<FILE_NAME>.properties");
+```
+
+To get the list of files,
+```
+List<S3File> lstS3Files = S3PresignedURL.getFilesList("<FILE_NAME>.properties");
+```
+
+ </details>
