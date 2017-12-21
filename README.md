@@ -104,5 +104,5 @@ Map<String, String> s3Creds = new HashMap<>();
 s3Creds.put(S3PresignedURL.AWS_ACCESS_ID, <ACCESS_ID>);
 s3Creds.put(S3PresignedURL.AWS_SECRET_KEY, <SECRET_KEY>);
 
-List<S3File> lstS3Files = helper.getListFiles(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600, <PROXY_PORT>, <PROXY_HOST>);
+ List<S3File> lstS3Files = helper.getListFiles(<EndPoint_URL>, s3Creds, "GET", <Bucket_Region>, 3600, <PROXY_PORT>, <PROXY_HOST>);
 ```
