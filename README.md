@@ -13,14 +13,17 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 * Not only to download the file, but also to get the xml file which has the details about the list of files hosted in the bucket. All that need to be done is provide the path of the folder.
 
 
-## Parameters
-* Following parameters are required.
+<details>
+ <summary>Using method arguments</summary><p>
+ 
+  * Following parameters are required.
   * Endpoint URL
   * Credential Map
   * HTTP Method
   * Bucket Region
   * TTL
   * Proxy Host and Port
+  
 * *Endpoint URL* is the URL of your bucket along with the path of file / folder.
   * Eg:- http://s3-us-west-1.amazonaws.com/<BUCKET_NAME>/<FOLDER>/<FILENAME.FORMAT>
   * Every region has its own format of ENd Point URL. The End point URL should be constructed perfectly to access the data.
@@ -44,6 +47,8 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 * *TTL* is the *Time **To **L*ive for the generated Pre-Signed URL. It should be provided in seconds. If provided as 0, it is set to expire in 1Hr.
 
 * *Proxy Host and Port* is needed to download the list of files and folders in the virtually hosted S3 bucket.
+
+</p></details>
 
 ## Usage
 *s3-presigned-url* is available as a dependency jar in Maven central repository. 
