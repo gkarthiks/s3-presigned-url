@@ -76,28 +76,19 @@ public class S3PresignedURL {
 			Properties s3Props = new Properties();
 			s3Props.load(new FileInputStream(s3PropPath));
 			
-			String accessId = s3Props.getProperty("s3.access.id"),
-					secretKey = s3Props.getProperty("s3.secret.key"),
-					endPointURL = s3Props.getProperty("s3.endpoint.url"),
-					httpMethod = s3Props.getProperty("s3.http.method"),
-					bucketRegion = s3Props.getProperty("s3.bucket.region"),
-					ttl = s3Props.getProperty("s3.ttl");
-			
-			//Validate and throws exception if the mandatory value are not present.
 			List<String> errorList = new ArrayList<>();
-			if(S3CommonUtils.isEmptyOrNull(accessId)) errorList.add("Access ID");
-			if(S3CommonUtils.isEmptyOrNull(secretKey)) errorList.add("Secret Key");
-			if(S3CommonUtils.isEmptyOrNull(endPointURL)) errorList.add("End Point URL");
-			if(S3CommonUtils.isEmptyOrNull(httpMethod)) errorList.add("HTTP Method");
-			if(S3CommonUtils.isEmptyOrNull(bucketRegion)) errorList.add("Bucket Region");
-			if(S3CommonUtils.isEmptyOrNull(ttl)) errorList.add("TTL");
-
+			S3CommonUtils.parseAndValidate(errorList, s3Props);
+			
 			if( errorList.isEmpty() ) {
 				Map<String, String> s3Credentials = new HashMap<>();
-				s3Credentials.put(S3PresignedURL.AWS_ACCESS_ID, accessId);
-				s3Credentials.put(S3PresignedURL.AWS_SECRET_KEY, secretKey);
+				s3Credentials.put(S3PresignedURL.AWS_ACCESS_ID, s3Props.getProperty("s3.access.id"));
+				s3Credentials.put(S3PresignedURL.AWS_SECRET_KEY, s3Props.getProperty("s3.secret.key"));
 				
-				return getS3PresignedURL(endPointURL, s3Credentials, httpMethod, bucketRegion, Integer.parseInt(ttl));
+				return getS3PresignedURL(s3Props.getProperty("s3.endpoint.url"), 
+											s3Credentials, 
+											s3Props.getProperty("s3.http.method"), 
+											s3Props.getProperty("s3.bucket.region"), 
+											Integer.parseInt(s3Props.getProperty("s3.ttl")));
 			} else {
 				throw new Error("No value found for "+String.join(", ", errorList));
 			}
