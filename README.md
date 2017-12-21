@@ -85,7 +85,7 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 <details>
  <summary>
   
-  ##### Using method arguments</summary><p>
+  #### Using method arguments</summary><p>
  
 * Create a Map for the credentials.
 * Construct the End Point URL based on this [Amazon Reference table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
@@ -117,7 +117,7 @@ s3Creds.put(S3PresignedURL.AWS_SECRET_KEY, <SECRET_KEY>);
 <details>
  <summary>
   
-  ##### Using Properties File</summary><p>
+  #### Using Properties File</summary><p>
  
  * Create a <DESIRED_NAME>.properties file in the `resource` folder.
  * Have the following key with case sensitivity and corresponding values assigned to it.
