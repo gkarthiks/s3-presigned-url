@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * 
@@ -12,7 +14,7 @@ import java.io.InputStreamReader;
  */
 public class S3CommonUtils {
 
-	public S3CommonUtils() {
+	private S3CommonUtils() {
 	}
 	
 	/**
@@ -52,4 +54,29 @@ public class S3CommonUtils {
 		return sb.toString();
 	}
 
+	/**
+	 * Returns false if the given string is null or if the string doesn't have any data,
+	 * else will return true.
+	 */
+	public static boolean isEmptyOrNull(String inStr) {
+		if(null != inStr && inStr != "" && inStr.length() > 0)
+			return false;
+		else return true;
+	}
+
+	/**
+	 * Validate and adds the missing mandatory attribute in ErrorList.
+	 * @param errorList
+	 * @param s3Props
+	 * @return
+	 */
+	public static List<String> parseAndValidate(List<String> errorList, Properties s3Props) {
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.access.id"))) errorList.add("Access ID");
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.secret.key"))) errorList.add("Secret Key");
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.endpoint.url"))) errorList.add("End Point URL");
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.http.method"))) errorList.add("HTTP Method");
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.bucket.region"))) errorList.add("Bucket Region");
+		if(S3CommonUtils.isEmptyOrNull(s3Props.getProperty("s3.ttl"))) errorList.add("TTL");
+		return errorList;
+	}
 }
