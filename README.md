@@ -54,31 +54,31 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 <dependency>
   <groupId>com.github.gkarthiks</groupId>
   <artifactId>s3-presigned-url</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 </dependency>
 ```
 
 ### Apache Buildr
-```'com.github.gkarthiks:s3-presigned-url:jar:0.1.0'```
+```'com.github.gkarthiks:s3-presigned-url:jar:0.1.1'```
 
 ### Apache Ivy
-``` <dependency org="com.github.gkarthiks" name="s3-presigned-url" rev="0.1.0" />```
+``` <dependency org="com.github.gkarthiks" name="s3-presigned-url" rev="0.1.1" />```
 
 ### Groovy Grape
 ```
 @Grapes( 
-@Grab(group='com.github.gkarthiks', module='s3-presigned-url', version='0.1.0') 
+@Grab(group='com.github.gkarthiks', module='s3-presigned-url', version='0.1.1') 
 )
 ```
 
 ### Gradle/Grails
-```compile 'com.github.gkarthiks:s3-presigned-url:0.1.0'```
+```compile 'com.github.gkarthiks:s3-presigned-url:0.1.1'```
 
 ### Scala SBT
-```libraryDependencies += "com.github.gkarthiks" % "s3-presigned-url" % "0.1.0"```
+```libraryDependencies += "com.github.gkarthiks" % "s3-presigned-url" % "0.1.1"```
 
 ### Leiningen
-```[com.github.gkarthiks/s3-presigned-url "0.1.0"]```
+```[com.github.gkarthiks/s3-presigned-url "0.1.1"]```
 
 ## Implementation
 
