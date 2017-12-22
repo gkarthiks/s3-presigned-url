@@ -40,7 +40,7 @@ Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 * *Bucket Region* is where the S3 bucket is physically hosted. Pass the region data found under this [table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region) for the bucket the Pre-Signed Url needs to be generated.
 
-* *TTL* is the *Time **To **L*ive for the generated Pre-Signed URL. It should be provided in seconds. If provided as 0, it is set to expire in 1Hr.
+* *TTL* is the *Time To Live* for the generated Pre-Signed URL. It should be provided in seconds. If provided as 0, it is set to expire in 1Hr.
 
 * *Proxy Host and Port* is needed to download the list of files and folders in the virtually hosted S3 bucket.
 
