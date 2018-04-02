@@ -1,4 +1,6 @@
 # s3-presigned-url
+[![Build Status](https://travis-ci.org/gkarthiks/s3-presigned-url.svg?branch=master)](https://travis-ci.org/gkarthiks/s3-presigned-url)
+
 Creating a PreSigned URL for the Amazon S3 to download the data via plain HTTP.
 
 ## Why s3-presigned-url
