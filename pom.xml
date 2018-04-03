@@ -8,7 +8,7 @@
   <packaging>jar</packaging>
 
   <name>s3-presignedURL</name>
-  <description>A jar file to get the Pre Signed URL and get list of Files from the Amazon S3 virtually hosted buckets.</description>
+  <description>A jar file to get the Pre Signed URL and get list of Files from the Amazon S3 virtually hosted buckets, provided the creds for secured buckets.</description>
   <url>https://github.com/gkarthiks/s3-presigned-url/tree/master</url>
 
   <licenses>
